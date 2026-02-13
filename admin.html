@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<h2>Panel Administrador</h2>
+<table border="1">
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Teléfono</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+<script>
+const supabase = supabase.createClient(
+  "AQUI_TU_URL",
+  "AQUI_TU_ANON_KEY"
+);
+
+async function cargar(){
+  const { data } = await supabase
+    .from("registros")
+    .select("*")
+    .order("id",{ascending:false});
+
+  const tabla = document.getElementById("tabla");
+  tabla.innerHTML="";
+
+  data.forEach(d=>{
+    tabla.innerHTML+=`
+      <tr>
+        <td>${d.nombre}</td>
+        <td>${d.telefono}</td>
+      </tr>
+    `;
+  });
+}
+
+cargar();
+
+supabase
+  .channel('realtime')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'registros' },
+    payload => {
+      cargar();
+      alert("Nuevo registro 🔔");
+    }
+  )
+  .subscribe();
+</script>
+
+</body>
+</html>
